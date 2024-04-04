@@ -1,13 +1,17 @@
 import streamlit as st
 import pdb
 import io
+from dataclasses import dataclass
+from ingestor import load_documents
 
+from typing import Any
+from data import *
 
-
+from ingestor import KnowledgeBase
 
 class Session:
     def __init__(self):
-        pass
+        self.knowledge_base = None 
 
     def render_sidebar(self):
         st.sidebar.markdown("# Collections")
@@ -17,11 +21,25 @@ class Session:
 
         text = st.sidebar.text_area("Custom message")
 
-        self.documents = [*files, *urls.split('\n'), text]
-
         if st.button("Generate"):
-            pdb.set_trace()
-            pass
+            self.knowledge_base = KnowledgeBase()
+            for f in files:
+                self.knowledge_base.add_document(Document(
+                    type=FILE, data=f
+                ))
+            
+            for url in urls:
+                self.knowledge_base.add_document(Document(
+                    type=URL, data=url
+                ))
+
+            self.knowledge_base.add_document(Document(
+                type=TEXT, data=text
+            ))
+
+            self.knowledge_base.load_document()
+
+        
 
     def render(self):
         self.render_sidebar()
