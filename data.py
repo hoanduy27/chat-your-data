@@ -9,3 +9,7 @@ class Document:
 FILE = "file"
 URL = "url"
 TEXT = "text"
+
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+
+VECTORSTORE_ROOT = "assets"

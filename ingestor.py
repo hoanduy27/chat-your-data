@@ -1,4 +1,5 @@
 import io
+import os
 import pickle
 import streamlit as st
 
@@ -6,12 +7,25 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import UnstructuredFileLoader, PyPDFLoader, WebBaseLoader
 from langchain.vectorstores.faiss import FAISS
 from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+
+
 from data import *
 
 from typing import Union, List
 
+
+def postprocess(text):
+  text = text.split('\n')
+  text = [line for line in text if line != '']
+
+  return '\n'.join(text)
+
 class KnowledgeBase:
-    def __init__(self, documents=None):
+    def __init__(self, name, documents=None):
+        self.name = name
+
         if documents:
             self.documents = documents 
         else:
@@ -37,7 +51,10 @@ class KnowledgeBase:
 
             elif doc.type == URL:
                 try:
-                    loaders.append(WebBaseLoader(doc.data))
+                    loader = WebBaseLoader(doc.data)
+                    loader.requests_kwargs = {'verify' :False}
+                                              
+                    loaders.append(loader)
                 except:
                     pass
             elif doc.type == TEXT:
@@ -55,11 +72,19 @@ class KnowledgeBase:
     def split_document(self):
         # self.pages will be splitted to smaller chunks
         text_splitter = RecursiveCharacterTextSplitter(
-            sepa
+            chunk_size=1500,
+            chunk_overlap=150,
+            separators=["\n\n", "\n", ".", " ", ""]
         )
+        self.pages = text_splitter.split_documents(self.pages)
 
     def embed_document(self):
-        pass 
+        embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+        self.vectorstore = FAISS.from_documents(self.pages, embeddings)
+        with open(os.path.join(VECTORSTORE_ROOT, self.name + '.pkl'), "wb") as f:
+            pickle.dump(vectorstore, f)
+
+
 
 
 if __name__ =="__main__":
