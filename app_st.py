@@ -1,8 +1,9 @@
 import streamlit as st
+import pdb
+import io
 
-def ingest_data(doclist):
-    for doc in doclist:
-        pass
+
+
 
 class Session:
     def __init__(self):
@@ -19,9 +20,8 @@ class Session:
         self.documents = [*files, *urls.split('\n'), text]
 
         if st.button("Generate"):
+            pdb.set_trace()
             pass
-
-
 
     def render(self):
         self.render_sidebar()
