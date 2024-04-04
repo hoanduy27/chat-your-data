@@ -10,6 +10,9 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
 
+import pdb
+
+
 
 from data import *
 
@@ -57,6 +60,7 @@ class KnowledgeBase:
                     loaders.append(loader)
                 except:
                     pass
+
             elif doc.type == TEXT:
                 fs = io.BytesIO() 
                 fs.write(doc.data.getvalue())
@@ -83,9 +87,6 @@ class KnowledgeBase:
         self.vectorstore = FAISS.from_documents(self.pages, embeddings)
         with open(os.path.join(VECTORSTORE_ROOT, self.name + '.pkl'), "wb") as f:
             pickle.dump(vectorstore, f)
-
-
-
 
 if __name__ =="__main__":
     print("Loading data...")
