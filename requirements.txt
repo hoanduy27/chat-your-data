@@ -5,3 +5,4 @@ unstructured
 tiktoken
 rich #for console formatting
 gradio
+streamlit
