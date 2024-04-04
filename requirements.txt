@@ -6,3 +6,5 @@ tiktoken
 rich #for console formatting
 gradio
 streamlit
+pypdf
+python-dotenv
