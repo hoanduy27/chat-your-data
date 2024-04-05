@@ -12,8 +12,6 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 
 import pdb
 
-
-
 from data import *
 
 from typing import Union, List
@@ -35,12 +33,25 @@ class KnowledgeBase:
             self.documents = []
 
         self.pages = [] 
+        self.embedding = None 
 
     def add_document(self, documents: Union[Document, List[Document]]):
         if isinstance(documents, list):
             self.documents.extend(documents)
         else:
             self.documents.append(documents)
+
+    def set_embedding(self, embedding_name, context: dict):
+        embedding_class = embedding_choices[embedding_name]['class']
+        
+        if embedding_name == "OpenAI":
+            os.environ["OPENAI_API_KEY"] = context['api_key']
+            self.embedding = embedding_class()
+        else:
+            # print(context)
+            self.embedding = embedding_class(**context)
+
+        
 
     def load_document(self):
         loaders = []
@@ -62,10 +73,11 @@ class KnowledgeBase:
                     pass
 
             elif doc.type == TEXT:
-                fs = io.BytesIO() 
-                fs.write(doc.data.getvalue())
-                
-                loaders.append(UnstructuredFileLoader(fs))
+                if doc.data != "":
+                    fs = io.BytesIO()        
+                    fs.write(doc.data)
+                    
+                    loaders.append(UnstructuredFileLoader(fs))
         
         for loader in loaders:
             self.pages.extend(loader.load())
@@ -83,8 +95,9 @@ class KnowledgeBase:
         self.pages = text_splitter.split_documents(self.pages)
 
     def embed_document(self):
-        embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-        self.vectorstore = FAISS.from_documents(self.pages, embeddings)
+        os.makedirs(VECTORSTORE_ROOT, exist_ok=True)
+        # embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+        self.vectorstore = FAISS.from_documents(self.pages, self.embedding)
         with open(os.path.join(VECTORSTORE_ROOT, self.name + '.pkl'), "wb") as f:
             pickle.dump(vectorstore, f)
 

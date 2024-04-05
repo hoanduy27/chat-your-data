@@ -4,7 +4,8 @@ faiss-cpu
 unstructured
 tiktoken
 rich #for console formatting
-gradio
+# gradio
 streamlit
 pypdf
 python-dotenv
+sentence-transformers
