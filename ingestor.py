@@ -1,9 +1,10 @@
 import io
 import os
+import json
 import pickle
 import streamlit as st
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain.document_loaders import UnstructuredFileLoader, PyPDFLoader, WebBaseLoader
 from langchain.vectorstores.faiss import FAISS
 from langchain.embeddings import OpenAIEmbeddings
@@ -34,6 +35,7 @@ class KnowledgeBase:
 
         self.pages = [] 
         self.embedding = None 
+        self.embedding_config = None 
 
     def add_document(self, documents: Union[Document, List[Document]]):
         if isinstance(documents, list):
@@ -42,16 +44,22 @@ class KnowledgeBase:
             self.documents.append(documents)
 
     def set_embedding(self, embedding_name, context: dict):
-        embedding_class = embedding_choices[embedding_name]['class']
-        
+        print("SEtting embedding")
+        embedding_class = embedding_choices[embedding_name]
+
         if embedding_name == "OpenAI":
             os.environ["OPENAI_API_KEY"] = context['api_key']
             self.embedding = embedding_class()
+            context.pop('api_key')
+            
         else:
             # print(context)
             self.embedding = embedding_class(**context)
 
-        
+        self.embedding_config = {
+            "class": embedding_name,
+            "config": context
+        }
 
     def load_document(self):
         loaders = []
@@ -75,7 +83,7 @@ class KnowledgeBase:
             elif doc.type == TEXT:
                 if doc.data != "":
                     fs = io.BytesIO()        
-                    fs.write(doc.data)
+                    fs.write(doc.data.encode("utf-8"))
                     
                     loaders.append(UnstructuredFileLoader(fs))
         
@@ -96,10 +104,21 @@ class KnowledgeBase:
 
     def embed_document(self):
         os.makedirs(VECTORSTORE_ROOT, exist_ok=True)
+        
+        savedir = os.path.join(
+            VECTORSTORE_ROOT,
+            self.name
+        )
+        
         # embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
         self.vectorstore = FAISS.from_documents(self.pages, self.embedding)
-        with open(os.path.join(VECTORSTORE_ROOT, self.name + '.pkl'), "wb") as f:
-            pickle.dump(vectorstore, f)
+        
+        self.vectorstore.save_local(os.path.join(VECTORSTORE_ROOT, self.name))
+        
+        with open(os.path.join(savedir, 'embedding_config.json'), 'w') as f:
+            json.dump(self.embedding_config, f, indent=2)
+        # with open(os.path.join(VECTORSTORE_ROOT, self.name + '.pkl'), "wb") as f:
+        #     pickle.dump(self.vectorstore, f)
 
 if __name__ =="__main__":
     print("Loading data...")

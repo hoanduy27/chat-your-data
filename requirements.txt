@@ -8,4 +8,4 @@ rich #for console formatting
 streamlit
 pypdf
 python-dotenv
-sentence-transformers
+# sentence-transformers
