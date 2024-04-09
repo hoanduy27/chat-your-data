@@ -3,6 +3,18 @@ from typing import Any
 from langchain.embeddings import OpenAIEmbeddings
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
+import os
+from uuid import uuid4
+from langsmith import Client
+
+unique_id = uuid4().hex[0:8]
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_PROJECT"] = f"Tracing Walkthrough - {unique_id}"
+os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+os.environ["LANGCHAIN_API_KEY"] = "ls__0ad5987d8865411caa6f1088be2085b0"  # Update to your API key
+
+Client()
+
 @dataclass
 class Document:
     type: str
@@ -11,6 +23,8 @@ class Document:
 FILE = "file"
 URL = "url"
 TEXT = "text"
+JSON = "json"
+
 
 NEW_COLLECTION = "Create new collection"
 LOAD_COLLECTIONS = "Load existing collections"
@@ -36,3 +50,6 @@ embedding_args = {
 }
 
 MAX_HISTORY = 3
+
+EN = "English"
+VI = "Vietnamese"

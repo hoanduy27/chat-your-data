@@ -9,35 +9,21 @@ from langchain.memory import ConversationBufferMemory
 from data import *
 import pickle
 from langchain.vectorstores.faiss import FAISS
+import re 
 
-_template = """Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
-You can assume the question about the most recent state of the union address.
 
-Chat History:
-{chat_history}
-Follow Up Input: {question}
-Standalone question:"""
-CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(_template)
-
-template = """You are an AI assistant for answering questions about the most recent state of the union address.
-You are given the following extracted parts of a long document and a question. Provide a conversational answer.
-If you don't know the answer, just say "Hmm, I'm not sure." Don't try to make up an answer.
-If the question is not about the most recent state of the union, politely inform them that you are tuned to only answer questions about the most recent state of the union.
-Lastly, answer the question as if you were a pirate from the south seas and are just coming back from a pirate expedition where you found a treasure chest full of gold doubloons.
-Question: {question}
-=========
-{context}
-=========
-Answer in Markdown:"""
-QA_PROMPT = PromptTemplate(template=template, input_variables=[
-                           "question", "context"])
+def postprocess(text):
+    tag_re = re.compile(r"(^> ANSWER:)(.*)(> END OF ANSWER.*$)")
+    text = tag_re.sub(r'\2', text)
+    return text.strip()
 
 class QA:
-    def __init__(self, retriever, model_name):
+    def __init__(self, retriever, model_name, language):
         self.retriever = retriever
         self.model_name = model_name
         self.memory = None 
         self.chain = None 
+        self.language = language
 
     
     def get_chain(self):
@@ -48,6 +34,12 @@ class QA:
         #     llm, 
         #     retriever=self.retriever
         # )
+        if self.language == EN:
+            from prompts.prompt_en import CONDENSE_QUESTION_PROMPT, QA_PROMPT
+        elif self.language == VI:
+            from prompts.prompt_vi import CONDENSE_QUESTION_PROMPT, QA_PROMPT
+        else:
+            raise RuntimeError(f"Language {self.language} is not supported.")
 
         llm = ChatOpenAI(model_name=self.model_name, temperature=0)
         self.memory = ConversationBufferMemory(
@@ -72,7 +64,7 @@ class QA:
             reply = self.chain({"question": question})
 
         print(f"{reply = }")
-        return reply['answer'], reply['chat_history']
+        return postprocess(reply['answer']), reply['chat_history']
 
     def clear_context(self):
         if self.memory is not None:

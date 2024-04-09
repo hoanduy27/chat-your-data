@@ -7,8 +7,12 @@ import streamlit as st
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain.document_loaders import UnstructuredFileLoader, PyPDFLoader, WebBaseLoader
 from langchain.vectorstores.faiss import FAISS
+from langchain.vectorstores.pinecone import Pinecone
 from langchain.embeddings import OpenAIEmbeddings
 from langchain_community.embeddings import HuggingFaceEmbeddings
+
+
+from langchain_community.document_loaders import pdf
 
 
 import pdb
@@ -17,6 +21,7 @@ from data import *
 
 from typing import Union, List
 
+from loader import PyPDFByteLoader, TextLoader
 
 def postprocess(text):
   text = text.split('\n')
@@ -37,7 +42,10 @@ class KnowledgeBase:
         self.embedding = None 
         self.embedding_config = None 
 
-    def add_document(self, documents: Union[Document, List[Document]]):
+    def add_document(
+            self, 
+            documents: Union[Document, List[Document]]
+        ):
         if isinstance(documents, list):
             self.documents.extend(documents)
         else:
@@ -67,9 +75,11 @@ class KnowledgeBase:
             if doc.type == FILE:
                 if doc.data.name.endswith('pdf'):
                     fs = io.BytesIO()
+    
                     fs.write(doc.data.getvalue())
-
-                    loaders.append(PyPDFLoader(fs))
+                    fs.seek(0)
+                    
+                    loaders.append(PyPDFByteLoader(fs))
 
             elif doc.type == URL:
                 try:
@@ -82,13 +92,17 @@ class KnowledgeBase:
 
             elif doc.type == TEXT:
                 if doc.data != "":
-                    fs = io.BytesIO()        
-                    fs.write(doc.data.encode("utf-8"))
+                    # fs = io.BytesIO()        
+                    # fs.write(doc.data.encode("utf-8"))
                     
-                    loaders.append(UnstructuredFileLoader(fs))
+                    loaders.append(TextLoader(doc.data))
         
         for loader in loaders:
-            self.pages.extend(loader.load())
+            try:
+                self.pages.extend(loader.load())
+            except:
+                print(f"{loader} failed!")
+                continue
 
         return self.pages
         
