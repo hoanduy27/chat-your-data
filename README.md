@@ -1,9 +1,32 @@
 # Chat-Your-Data
 
-Create a ChatGPT like experience over your custom docs using [LangChain](https://github.com/langchain-ai/langchain).
+Chat with your data.
 
-See [this blog post](blogpost.md) for a more detailed explanation.
+## Technologies
+- LangChain
+- FAISS
 
-## Running the Application
+## How to run
 
-`python app_st.py`
+- Get OpenAI API Key, you need to type it inside the app.
+
+- Get LangSmith API Key by registering your account at https://api.smith.langchain.com.
+
+- Create ".env" file and fill the following information
+
+```sh
+LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
+LANGCHAIN_API_KEY=<YOUR LANGSMITH API KEY>
+```
+
+Ok, time to run!
+
+```
+docker compose up -d
+```
+
+Your application starts at `localhost:8501`. To check log, use:
+
+```
+docker logs -f chat-your-data-app-1
+```
