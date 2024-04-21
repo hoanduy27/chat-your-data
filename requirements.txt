@@ -9,4 +9,3 @@ streamlit
 pypdf
 python-dotenv
 # sentence-transformers
-streamlit-audiorec
