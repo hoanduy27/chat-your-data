@@ -10,13 +10,7 @@ import os
 import json
 import openai
 
-from st_audiorec import st_audiorec
-from audio_recorder_streamlit import audio_recorder
-
-from audio_utils import transcribe
-
-def get_reply():
-    pass 
+# from audio_utils import transcribe
 
 class Session:
     # def __init__(self):
@@ -72,9 +66,10 @@ class Session:
             if name != "":
                 st.session_state.knowlege_base = KnowledgeBase(name)
                     
-                # st.session_state.knowlege_base.set_embedding(embedding_name, context)
+                st.session_state.knowlege_base.set_embedding(embedding_name, context)
                 
                 for f in files:
+                    st.text(f"PDF={f.name}")
                     st.session_state.knowlege_base.add_document(Document(
                         type=FILE, data=f
                     ))
@@ -85,6 +80,8 @@ class Session:
                         type=URL, data=url
                     ))
 
+                st.text(f"TEXT=\"{text[:100]}...\"")
+
                 st.session_state.knowlege_base.add_document(Document(
                     type=TEXT, data=text
                 ))
@@ -93,10 +90,10 @@ class Session:
                 st.session_state.knowlege_base.load_document()
 
                 st.text("Chunking document")
-                # st.session_state.knowlege_base.split_document()
+                st.session_state.knowlege_base.split_document()
 
                 st.text("Embedding document")
-                # st.session_state.knowlege_base.embed_document()
+                st.session_state.knowlege_base.embed_document()
 
                 st.text(f"Success. Please choose `Load vector store` and select `{name}`")
             else:
@@ -120,7 +117,8 @@ class Session:
             st.session_state.history = []
 
         if st.sidebar.button("Clear context"):
-            st.session_state.history = []            
+            st.session_state.history = []       
+            st.session_state.qa.clear_context()     
 
         # Display chat messages from history on app rerun
         for message in st.session_state.messages:
@@ -129,20 +127,24 @@ class Session:
 
         # Render record button
         prompt = st.chat_input("What is up?", )
-        wav_audio_data = audio_recorder()
-        if wav_audio_data is not None:
-            st.audio(wav_audio_data, format='audio/wav')
+        # wav_audio_data = audio_recorder()
+        # if wav_audio_data is not None:
+        #     st.audio(wav_audio_data, format='audio/wav')
             # prompt = transcribe(wav_audio_data)
 
         # Accept user input
         if prompt:
             print(prompt)
+            
+            print(f"{st.session_state.history}")
+
             # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
             # Display user message in chat message container
             with st.chat_message("user"):
                 st.markdown(prompt)
 
+            # Make reply
             reply, history =  st.session_state.qa.reply(
                 prompt, 
                 st.session_state.history
@@ -154,19 +156,18 @@ class Session:
                 st.session_state.history = []
                 st.session_state.qa.clear_context()
 
-            if len(st.session_state.history) == 0:
-                st.text("Context clear!")
-            else:
-                st.text(f"Context will be cleared after {MAX_HISTORY - len(st.session_state.history)//2} turns.") 
-
-            print(f"{st.session_state.history}")
-
             # reply = "Text normalization, speech encoder and vocoder."
 
             st.session_state.messages.append({"role": "bot", "content": reply})
 
             with st.chat_message("bot"):
                 st.markdown(reply)
+
+            if len(st.session_state.history) == 0:
+                st.text("Context clear!")
+            else:
+                st.text(f"Context will be cleared after {MAX_HISTORY - len(st.session_state.history)//2} turns.") 
+
 
     def render_chat(self):
         st.sidebar.markdown("# Chat model")

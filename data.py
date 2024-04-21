@@ -2,16 +2,21 @@ from dataclasses import dataclass
 from typing import Any
 from langchain.embeddings import OpenAIEmbeddings
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings.openai import OpenAIEmbeddings
 
 import os
 from uuid import uuid4
 from langsmith import Client
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 unique_id = uuid4().hex[0:8]
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = f"Tracing Walkthrough - {unique_id}"
-os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
-os.environ["LANGCHAIN_API_KEY"] = "ls__0ad5987d8865411caa6f1088be2085b0"  # Update to your API key
+os.environ["LANGCHAIN_ENDPOINT"] = os.environ.get("LANGCHAIN_ENDPOINT", "")
+os.environ["LANGCHAIN_API_KEY"] = os.environ.get("LANGCHAIN_API_KEY", "") # Update to your API key
 
 Client()
 
